@@ -10,49 +10,11 @@ let notYetOpenChests: hashMap = {};
 let emptyChests: number = 0;
 let rewardedChests: number = 0;
 
-async function goToRoom(room: string): Promise<Boolean> {
+async function goToRoom(room: string): Promise<Object> {
     try {
         let response = await axios.get(`http://mediarithmics.francecentral.cloudapp.azure.com:3000${room}`);
-        const rooms: Array<string> = response.data.rooms;
-        const chests: Array<string> = response.data.chests;
         
-        // console.log(chests);
-        if (chests) {
-            let chestsPromises: Array<Promise<any>> = []
-            for (const chest of chests) {
-                // notYetOpenChests[chest] = true;
-                 
-                let promise = new Promise(function(resolve, reject) {
-                    resolve(openChest(chest));
-                });
-                chestsPromises.push(promise)
-            }
-            Promise.all(chestsPromises).then(function(promises) {
-                const nbChest: number = promises.length;
-                console.log(`Number of new chests open : ${nbChest} 
-                    Empty chests : ${emptyChests}
-                    Rewarded chests : ${rewardedChests}`);
-
-            }); 
-        }
-
-        // console.log(rooms)
-        if(rooms) {
-            let roomsPromises: Array<Promise<any>> = []
-            for (const room of rooms) {
-                // notYetVisitedRooms[room] = true;
-                let promise = new Promise(function(resolve, reject) {
-                    resolve(goToRoom(room));
-                });
-                roomsPromises.push(promise)
-            }
-            Promise.all(roomsPromises).then(function(promises) {
-                const nbRooms: number = promises.length;
-                console.log(`Number of new rooms find : ${nbRooms}`);
-            });
-        }
-        
-        return true;
+        return response.data;
     } catch (error) {
         console.log(error);
     }
@@ -77,45 +39,52 @@ async function openChest(chest: string): Promise<Boolean> {
 const start = Date.now();
 (async (): Promise<void> => {
     try {
-        await goToRoom(`/castles/1/rooms/entry`);
-        // const bob = await testPromiseAll([`/castles/1/rooms/entry`]);
-        // console.log(bob)
+        const end = await theMightyQuestForEpicLoot([`/castles/1/rooms/entry`])
+        console.log('This is the end')
+        console.log(end)
+        console.log(`emptyChests : ${emptyChests}, rewardedChests : ${rewardedChests}`);
+        
         console.log((Date.now() - start)/1000 + ' secondes')
-
-        // False end of promise. just testing result
-        // setTimeout( function() {
-        //     console.log(notYetVisitedRooms);
-        //     console.log(notYetOpenChests);
-
-        // }, 10000);
     } catch (error) {
         console.log(error);
     }
 })();
 
 
-
-// async function testPromiseAll(rooms) {
-//     const promisesAll = await Promise.all(rooms.map(async function(room) {
-//         const response = await axios.get(`http://mediarithmics.francecentral.cloudapp.azure.com:3000${room}`);
-//         const rooms = response.data.rooms;
-//         const chests = response.data.chests
-//         // console.log(rooms);
-//         // console.log(chests);
-//         if (rooms) {
-//             const nextResponse = await axios.get(`http://mediarithmics.francecentral.cloudapp.azure.com:3000${room}`)
-//             const nextRooms = nextResponse.data.rooms;
-
-//             return [rooms, nextRooms];
-//         } else {
-//             return [rooms];
-//         }
-//     }));
-//     var flat = [];
-//     console.log(promisesAll)
-//     promisesAll.forEach(function(responseArray) {
-//         flat.push.apply(flat, responseArray);
-//     });
-
-//     return flat;
-// }
+async function theMightyQuestForEpicLoot(rooms: Array<string>): Promise<any> {
+    try {
+        if(rooms.length === 0) {
+            return false;
+        }
+    
+    
+        const roomsLoot = await Promise.all(rooms.map((room): Promise<Object> => {
+            const roomLoot = goToRoom(room);
+    
+            return roomLoot;
+        }));
+    
+        const allRooms = await Promise.all(roomsLoot.map((roomLoot) => {
+            const rooms = roomLoot['rooms'];
+            const chests = roomLoot['chests'];
+            if(chests !== undefined) {
+                for (const chest of chests) {
+                    openChest(chest);                    
+                }
+            }
+            // console.log(rooms);
+            if( rooms !== undefined) {
+                const result = theMightyQuestForEpicLoot(rooms);
+                return result;
+            } else {
+                return false;
+            }
+            
+        }));
+    
+        return allRooms;
+        
+    } catch (error) {
+        console.log(error);
+    }
+}

@@ -45,57 +45,17 @@ var emptyChests = 0;
 var rewardedChests = 0;
 function goToRoom(room) {
     return __awaiter(this, void 0, void 0, function () {
-        var response, rooms, chests, chestsPromises, _loop_1, _i, chests_1, chest, roomsPromises, _loop_2, _a, rooms_1, room_1, error_1;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
+        var response, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
                 case 0:
-                    _b.trys.push([0, 2, , 3]);
+                    _a.trys.push([0, 2, , 3]);
                     return [4 /*yield*/, axios_1["default"].get("http://mediarithmics.francecentral.cloudapp.azure.com:3000" + room)];
                 case 1:
-                    response = _b.sent();
-                    rooms = response.data.rooms;
-                    chests = response.data.chests;
-                    // console.log(chests);
-                    if (chests) {
-                        chestsPromises = [];
-                        _loop_1 = function (chest) {
-                            // notYetOpenChests[chest] = true;
-                            var promise = new Promise(function (resolve, reject) {
-                                resolve(openChest(chest));
-                            });
-                            chestsPromises.push(promise);
-                        };
-                        for (_i = 0, chests_1 = chests; _i < chests_1.length; _i++) {
-                            chest = chests_1[_i];
-                            _loop_1(chest);
-                        }
-                        Promise.all(chestsPromises).then(function (promises) {
-                            var nbChest = promises.length;
-                            console.log("Number of new chests open : " + nbChest + " \n                    Empty chests : " + emptyChests + "\n                    Rewarded chests : " + rewardedChests);
-                        });
-                    }
-                    // console.log(rooms)
-                    if (rooms) {
-                        roomsPromises = [];
-                        _loop_2 = function (room_1) {
-                            // notYetVisitedRooms[room] = true;
-                            var promise = new Promise(function (resolve, reject) {
-                                resolve(goToRoom(room_1));
-                            });
-                            roomsPromises.push(promise);
-                        };
-                        for (_a = 0, rooms_1 = rooms; _a < rooms_1.length; _a++) {
-                            room_1 = rooms_1[_a];
-                            _loop_2(room_1);
-                        }
-                        Promise.all(roomsPromises).then(function (promises) {
-                            var nbRooms = promises.length;
-                            console.log("Number of new rooms find : " + nbRooms);
-                        });
-                    }
-                    return [2 /*return*/, true];
+                    response = _a.sent();
+                    return [2 /*return*/, response.data];
                 case 2:
-                    error_1 = _b.sent();
+                    error_1 = _a.sent();
                     console.log(error_1);
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
@@ -132,16 +92,17 @@ function openChest(chest) {
 }
 var start = Date.now();
 (function () { return __awaiter(_this, void 0, void 0, function () {
-    var error_3;
+    var end, error_3;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, goToRoom("/castles/1/rooms/entry")];
+                return [4 /*yield*/, theMightyQuestForEpicLoot(["/castles/1/rooms/entry"])];
             case 1:
-                _a.sent();
-                // const bob = await testPromiseAll([`/castles/1/rooms/entry`]);
-                // console.log(bob)
+                end = _a.sent();
+                console.log('This is the end');
+                console.log(end);
+                console.log("emptyChests : " + emptyChests + ", rewardedChests : " + rewardedChests);
                 console.log((Date.now() - start) / 1000 + ' secondes');
                 return [3 /*break*/, 3];
             case 2:
@@ -152,25 +113,49 @@ var start = Date.now();
         }
     });
 }); })();
-// async function testPromiseAll(rooms) {
-//     const promisesAll = await Promise.all(rooms.map(async function(room) {
-//         const response = await axios.get(`http://mediarithmics.francecentral.cloudapp.azure.com:3000${room}`);
-//         const rooms = response.data.rooms;
-//         const chests = response.data.chests
-//         // console.log(rooms);
-//         // console.log(chests);
-//         if (rooms) {
-//             const nextResponse = await axios.get(`http://mediarithmics.francecentral.cloudapp.azure.com:3000${room}`)
-//             const nextRooms = nextResponse.data.rooms;
-//             return [rooms, nextRooms];
-//         } else {
-//             return [rooms];
-//         }
-//     }));
-//     var flat = [];
-//     console.log(promisesAll)
-//     promisesAll.forEach(function(responseArray) {
-//         flat.push.apply(flat, responseArray);
-//     });
-//     return flat;
-// }
+function theMightyQuestForEpicLoot(rooms) {
+    return __awaiter(this, void 0, void 0, function () {
+        var roomsLoot, allRooms, error_4;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 3, , 4]);
+                    if (rooms.length === 0) {
+                        return [2 /*return*/, false];
+                    }
+                    return [4 /*yield*/, Promise.all(rooms.map(function (room) {
+                            var roomLoot = goToRoom(room);
+                            return roomLoot;
+                        }))];
+                case 1:
+                    roomsLoot = _a.sent();
+                    return [4 /*yield*/, Promise.all(roomsLoot.map(function (roomLoot) {
+                            var rooms = roomLoot['rooms'];
+                            var chests = roomLoot['chests'];
+                            if (chests !== undefined) {
+                                for (var _i = 0, chests_1 = chests; _i < chests_1.length; _i++) {
+                                    var chest = chests_1[_i];
+                                    openChest(chest);
+                                }
+                            }
+                            // console.log(rooms);
+                            if (rooms !== undefined) {
+                                var result = theMightyQuestForEpicLoot(rooms);
+                                return result;
+                            }
+                            else {
+                                return false;
+                            }
+                        }))];
+                case 2:
+                    allRooms = _a.sent();
+                    return [2 /*return*/, allRooms];
+                case 3:
+                    error_4 = _a.sent();
+                    console.log(error_4);
+                    return [3 /*break*/, 4];
+                case 4: return [2 /*return*/];
+            }
+        });
+    });
+}
