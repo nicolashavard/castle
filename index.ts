@@ -1,4 +1,3 @@
-// let axios = require('axios')
 import axios from 'axios'
 import { hashMap } from './interfaces/hashmap';
 
